@@ -45,7 +45,7 @@ class AcceptanceTests(unittest.TestCase):
 
 if __name__ == '__main__':
 
-    test_dir = sys.argv[1] if len(sys.argv) > 1 else "tests"
+    test_dir = sys.argv[1] if len(sys.argv) > 1 else "tests/"
     sys.argv = [sys.argv[0]]
-    AcceptanceTests.add_tests(test_dir)
+    AcceptanceTests.add_tests('tests/')
     unittest.main()

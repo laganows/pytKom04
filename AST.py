@@ -35,6 +35,15 @@ class Declaration(Node):
         self.inits = inits
         self.error = error
 
+class Declarations(Node):
+    def __init__(self, declarations, declaration):
+        self.declarations = []
+        if declarations:
+            self.declarations.extend(declarations.declarations)
+        if declaration:
+            self.declarations.append(declaration)
+
+
 class Inits(Node):
     def __init__(self, inits, init):
         self.inits = []
@@ -48,6 +57,14 @@ class Condition(Node):
 
 class Instruction(Node):
     pass
+
+class Instructions(Node):
+    def __init__(self, instructions, instruction):
+        self.instructions = []
+        if instructions:
+            self.instructions.extend(instructions.instructions)
+        if instruction:
+            self.instructions.append(instruction)
 
 class Print(Instruction):
     def __init__(self, expression, error):
@@ -120,6 +137,7 @@ class BinExpr(Expression):
         self.expr1 = left
         self.operator = op
         self.expr2 = right
+        self.children = ( left, right ) #najwyzej skasowac
 
 class ExpressionInPar(Expression):
     def __init__(self, expression, error):
@@ -146,6 +164,15 @@ class FunctionDefinition(Node):
         self.id = id
         self.arglist = arglist
         self.compound_instr = compound_instr
+
+
+class FunctionDefinitions(Node):
+    def __init__(self, fundef, fundefs):
+        self.fundefs = []
+        if fundef:
+            self.fundefs.append(fundef)
+        if fundefs:
+            self.fundefs.extend(fundefs.fundefs)
 
 class ArgumentList(Node):
     def __init__(self, arg_list, arg):
