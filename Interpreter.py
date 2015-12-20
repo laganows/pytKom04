@@ -39,10 +39,10 @@ class Interpreter(object):
         for init in node.inits.inits:
             init.accept(self)
 
-    @when(AST.Declarations)
-    def visit(self, node):
-        for declaration in node.declarations:
-            declaration.accept(self)
+    # @when(AST.Declarations)
+    # def visit(self, node):
+    #     for declaration in node.declarations:
+    #         declaration.accept(self)
 
 
     @when(AST.Init)
@@ -51,10 +51,10 @@ class Interpreter(object):
         self.memoryStack.insert(node.id, expr_val)
         return expr_val
 
-    @when(AST.Inits)
-    def visit(self, node):
-        for init in node.inits:
-            init.accept(self)
+    # @when(AST.Inits)
+    # def visit(self, node):
+    #     for init in node.inits:
+    #         init.accept(self)
 
     @when(AST.Instructions)
     def visit(self, node):
@@ -178,10 +178,10 @@ class Interpreter(object):
     def visit(self, node):
         return self.memoryStack.get(node.id)
 
-    # @when(AST.FunctionDefinitions)
-    # def visit(self, node):
-    #     for fundef in node.fundefs:
-    #         fundef.accept(self)
+    @when(AST.FunctionDefinitions) ###
+    def visit(self, node):
+        for fundef in node.fundefs:
+            fundef.accept(self)
 
     @when(AST.FunctionDefinition)
     def visit(self, node):

@@ -134,11 +134,11 @@ class TypeChecker(NodeVisitor):
         self.actLoop = []
         self.noErrors = True
         self.visit(node.parts, tab)
-        
+
     def visit_Parts(self, node, tab):
         for part in node.parts:
             self.visit(part, tab)
-            
+
     def visit_Part(self, node, tab):
         pass
 
@@ -178,13 +178,13 @@ class TypeChecker(NodeVisitor):
 
     def visit_Instruction(self, node, tab):
         pass
-        
+
     def visit_Print(self, node, tab):
         self.visit(node.expression, tab)
 
     def visit_Labeled(self, node, tab):
         self.visit(node.instruction, tab)
-        
+
     def visit_Assignment(self, node, tab):
         variable = self.findVariable(tab, node.id)
         if variable is None:
@@ -203,7 +203,7 @@ class TypeChecker(NodeVisitor):
                         print "Warning: Value of type {0} assigned to symbol {1} of type {2}: line {3}" \
                                 .format(value_type, node.id, variable.type, node.line)
                     return ttype["="][variable.type][value_type]
-                
+
     def visit_Choice(self, node, tab):
         self.visit(node._if, tab)
         self.visit(node._else, tab)
@@ -214,7 +214,7 @@ class TypeChecker(NodeVisitor):
 
     def visit_Else(self, node, tab):
         self.visit(node.statement, tab)
-        
+
     def visit_While(self, node, tab):
         self.visit(node.cond, tab)
         self.actLoop.append(node)
@@ -222,9 +222,9 @@ class TypeChecker(NodeVisitor):
         self.actLoop.pop()
 
     def visit_RepeatUntil(self, node, tab):
-        self.visit(node.statement, tab)
-        self.actLoop.append(node)
         self.visit(node.cond, tab)
+        self.actLoop.append(node)
+        self.visit(node.statement, tab)
         self.actLoop.pop()
 
     def visit_Return(self, node, tab):
@@ -289,10 +289,10 @@ class TypeChecker(NodeVisitor):
 
         else:
             return variable.type
-            
-    def visit_BinExpr(self, node, tab):                                         
-        type1 = self.visit(node.expr1, tab)    
-        type2 = self.visit(node.expr2, tab)    
+
+    def visit_BinExpr(self, node, tab):
+        type1 = self.visit(node.expr1, tab)
+        type2 = self.visit(node.expr2, tab)
         op = node.operator;
         if type1 is None or not type2 in ttype[op][type1]:
             print "Error: Illegal operation, {0} {1} {2}: line {3}".format(type1, op, type2, node.line)
@@ -300,7 +300,7 @@ class TypeChecker(NodeVisitor):
 
         else:
             return ttype[op][type1][type2]
- 
+
     def visit_ExpressionInPar(self, node, tab):
         expression = node.expression
         return self.visit(expression, tab)
@@ -325,10 +325,10 @@ class TypeChecker(NodeVisitor):
                         self.noErrors = False
 
                         break
-                    
+
             self.visit(node.expression_list, tab)
             return function.type
-            
+
     def visit_ExpressionList(self, node, tab):
         for expression in node.expressions:
             self.visit(expression, tab)

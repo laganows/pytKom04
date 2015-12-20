@@ -29,6 +29,15 @@ class Init(Node):
         self.id = id
         self.expression = expression
 
+
+class Inits(Node):
+    def __init__(self, inits, init):
+        self.inits = []
+        if inits:
+            self.inits.extend(inits.inits)
+        if init:
+            self.inits.append(init)
+
 class Declaration(Node):
     def __init__(self, type, inits, error):
         self.type = type
@@ -44,13 +53,7 @@ class Declarations(Node):
             self.declarations.append(declaration)
 
 
-class Inits(Node):
-    def __init__(self, inits, init):
-        self.inits = []
-        if inits:
-            self.inits.extend(inits.inits)
-        if init:
-            self.inits.append(init)
+
 
 class Condition(Node):
     pass
