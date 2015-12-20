@@ -1,3 +1,4 @@
+import re
 import AST
 import SymbolTable
 from Memory import *
@@ -13,6 +14,73 @@ class Interpreter(object):
         self.memoryStack = MemoryStack()
         self.declaredType = None
         self.isFunctionScope = False
+        self.operator = {}
+        self.operator['+'] = self.add
+        self.operator['-'] = self.minus
+        self.operator['*'] = self.x
+        self.operator['/'] = self.divide
+        self.operator['>'] = self.greater
+        self.operator['<'] = self.less
+        self.operator['>='] = self.greater_eq
+        self.operator['<='] = self.less_eq
+        self.operator['=='] = self.eq
+        self.operator['!='] = self.neq
+        self.operator['%'] = self.mod
+        self.operator['&'] = self.b_and
+        self.operator['^'] = self.b_xor
+        self.operator['|'] = self.b_or
+        self.operator['<<'] = self.shl
+        self.operator['>>'] = self.shr
+
+
+    def add(self, r1, r2):
+        return r1 + r2
+
+    def minus(self, r1, r2):
+        return r1 - r2
+
+    def x(self, r1, r2):
+        return r1 * r2
+
+    def divide(self, r1, r2):
+        return r1 / r2
+
+    def greater(self, r1, r2):
+        return 1 if r1 > r2 else 0
+
+    def less(self, r1, r2):
+        return 1 if r1 < r2 else 0
+
+    def greater_eq(self, r1, r2):
+        return 1 if r1 >= r2 else 0
+
+    def less_eq(self, r1, r2):
+        return 1 if r1 <= r2 else 0
+
+    def eq(self, r1, r2):
+        return 1 if r1 == r2 else 0
+
+    def neq(self, r1, r2):
+        return 1 if r1 != r2 else 0
+
+    def mod(self, r1, r2):
+        return r1 % r2
+
+    def b_and(self, r1, r2):
+        return r1 & r2
+
+    def b_xor(self, r1, r2):
+        return r1 ^ r2
+
+    def b_or(self, r1, r2):
+        return r1 | r2
+
+    def shl(self, r1, r2):
+        return r1 << r2
+
+    def shr(self, r1, r2):
+        return r1 >> r2
+
 
     @on('node')
     def visit(self, node):
@@ -66,12 +134,16 @@ class Interpreter(object):
     def visit(self, node):
         r1 = node.expr1.accept(self)
         r2 = node.expr2.accept(self)
-        return eval(("{0}" + node.operator + "{1}").format(r1, r2))
+        return None if (r1 is None) or (r2 is None) else self.operator[node.operator](r1, r2)
+
+        #return eval(("{0}" + node.operator + "{1}").format(r1, r2))
         # try sth smarter than:
         # if(node.op=='+') return r1+r2
         # elsif(node.op=='-') ...
         # but do not use python eval
         # dopisac evaluatora, ktory przyjmie argumeny, operator i zwroci wynik (search on GitHub)
+
+
 
     @when(AST.Assignment)
     def visit(self, node):
@@ -99,6 +171,24 @@ class Interpreter(object):
 
     @when(AST.Const)
     def visit(self, node):
+        if re.match(r"(\+|-){0,1}(\d+\.\d+|\.\d+)", node.value):
+            return self.float(node)
+        elif re.match(r"(\+|-){0,1}\d+", node.value):
+            return self.integer(node)
+        elif re.match(r"\A('.*'|\".*\")\Z", node.value):
+            return self.string(node)
+        else:
+            #print node
+            from_stack = self.memoryStack.get(node.value)
+            return from_stack.value if from_stack is not None else None
+
+    def float(self, node):
+        return float(node.value)
+
+    def integer(self, node):
+        return int(node.value)
+
+    def string(self, node):
         return node.value
 
     @when(AST.While)

@@ -1,3 +1,4 @@
+import re
 from SymbolTable import SymbolTable, VariableSymbol, Function
 import AST
 
@@ -265,21 +266,28 @@ class TypeChecker(NodeVisitor):
     def visit_Expression(self, node, tab):
         pass
 
-    def visit_Const(self, node, tab):
-        value = node.value
-        if (value[0] in ('"', "'")) and (value[len(value) - 1] in ('"', "'")):
-            return 'string'
-        try:
-            int(value)
-            return 'int'
-        except ValueError:
-            try:
-                float(value)
-                return 'float'
-            except ValueError:
-                print "Error: {0} type is not recognized".format(value)
-                self.noErrors = False
+    def visit_Const(self, node):
+        if re.match(r"(\+|-){0,1}(\d+\.\d+|\.\d+)", node.value):
+            return self.visit_Float(node)
+        elif re.match(r"(\+|-){0,1}\d+", node.value):
+            return self.visit_Integer(node)
+        elif re.match(r"\A('.*'|\".*\")\Z", node.value):
+            return self.visit_String(node)
+        else:
+            variable = self.scope.get(node.value)
+            if variable is None:
+                print "Variable {} in line {} hasn't been declared".format(node.value, node.line)
+            else:
+                return variable.type
 
+    def visit_Integer(self, node):
+        return 'int'
+
+    def visit_Float(self,node):
+        return 'float'
+
+    def visit_String(self,node):
+        return 'string'
 
     def visit_Id(self, node, tab):
         variable = self.findVariable(tab, node.id)
