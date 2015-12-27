@@ -134,14 +134,42 @@ class Interpreter(object):
     def visit(self, node):
         r1 = node.expr1.accept(self)
         r2 = node.expr2.accept(self)
-        return None if (r1 is None) or (r2 is None) else self.operator[node.operator](r1, r2)
+        #return None if (r1 is None) or (r2 is None) else self.operator[node.operator](r1, r2)
 
-        #return eval(("{0}" + node.operator + "{1}").format(r1, r2))
-        # try sth smarter than:
-        # if(node.op=='+') return r1+r2
-        # elsif(node.op=='-') ...
-        # but do not use python eval
-        # dopisac evaluatora, ktory przyjmie argumeny, operator i zwroci wynik (search on GitHub)
+        if node.operator == '+':
+            return r1 + r2
+        elif node.operator == '-':
+            return r1 - r2
+        elif node.operator == '*':
+            return r1 * r2
+        elif node.operator == '/':
+            return r1 / r2
+        elif node.operator == '>':
+            return 1 if r1 > r2 else 0
+        elif node.operator == '<':
+            return 1 if r1 < r2 else 0
+        elif node.operator == '>=':
+            return 1 if r1 >= r2 else 0
+        elif node.operator == '<=':
+            return 1 if r1 <= r2 else 0
+        elif node.operator == '==':
+            return 1 if r1 == r2 else 0
+        elif node.operator == '!=':
+            return 1 if r1 != r2 else 0
+        elif node.operator == '%':
+            return r1 % r2
+        elif node.operator == '&':
+            return r1 & r2
+        elif node.operator == '^':
+            return r1 ^ r2
+        elif node.operator == '|':
+            return r1 | r2
+        elif node.operator == '<<':
+            return r1 << r2
+        elif node.operator == '>>':
+            return r1 >> r2
+
+        #return eval(("{0}" + node.operator + "{1}").format(r1, r2)) #was earlier
 
 
 
