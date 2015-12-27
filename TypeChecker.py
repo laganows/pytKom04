@@ -240,6 +240,7 @@ class TypeChecker(NodeVisitor):
 
             self.hasReturn = True
 
+
     def visit_Continue(self, node, tab):
         if self.actLoop.__len__() != 0:
             if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil: #inaczej sprawdzac czy ostatni element to AST.While lub AST.RepeatUntil
