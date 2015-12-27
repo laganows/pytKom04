@@ -64,14 +64,191 @@ class Interpreter(object):
 
     @when(AST.BinExpr)
     def visit(self, node):
-        r1 = node.expr1.accept(self)
-        r2 = node.expr2.accept(self)
-        return eval(("{0}" + node.operator + "{1}").format(r1, r2))
+
+        # r1 = node.expr1.accept(self)
+        # r2 = node.expr2.accept(self)
+        # return eval(("{0}" + node.operator + "{1}").format(r1, r2))
+
+        file_ = open('Failed.txt', 'a')
+        file_.write("tu dziala\n")
+        file_.close()
+
+        left_node = node.expr1.accept(self)
+        if type(left_node) == AST.Const:
+            left = left_node.value
+        else:
+            left = left_node
+        left_type = type(left).__name__
+
+        right_node = node.expr2.accept(self)
+        if type(right_node) == AST.Const:
+            right = right_node.value
+        else:
+            right = right_node
+        right_type = type(right).__name__
+
+        operator = node.operator
+
+
+############
+
+        returned_type = {'Integer': {}, 'Float': {}, 'String': {}, 'Boolean': {}}
+        for i in returned_type.keys():
+            returned_type[i] = {}
+            for j in returned_type.keys():
+                returned_type[i][j] = {}
+                for k in ['+', '-', '/', '*', '==', '>=', '<=', '!=']:
+                    returned_type[i][j][k] = None
+
+        returned_type['Integer']['Float']['+'] = 'Float'
+        returned_type['Integer']['Integer']['+'] = 'Integer'
+        returned_type['Float']['Float']['+'] = 'Float'
+        returned_type['Float']['Integer']['+'] = 'Float'
+        returned_type['String']['String']['+'] = 'String'
+        returned_type['Integer']['Float']['-'] = 'Float'
+        returned_type['Integer']['Integer']['-'] = 'Integer'
+        returned_type['Float']['Float']['-'] = 'Float'
+        returned_type['Float']['Integer']['-'] = 'Float'
+        returned_type['Integer']['Float']['*'] = 'Float'
+        returned_type['Integer']['Integer']['*'] = 'Integer'
+        returned_type['Float']['Float']['*'] = 'Float'
+        returned_type['Float']['Integer']['*'] = 'Float'
+        returned_type['String']['Integer']['*'] = 'String'
+        returned_type['Integer']['Float']['/'] = 'Float'
+        returned_type['Integer']['Integer']['/'] = 'Integer'
+        returned_type['Float']['Float']['/'] = 'Float'
+        returned_type['Float']['Integer']['/'] = 'Float'
+        returned_type['Float']['Float']['=='] = 'Boolean'
+        returned_type['Integer']['Integer']['=='] = 'Boolean'
+        returned_type['String']['String']['=='] = 'Boolean'
+        returned_type['Float']['Float']['!='] = 'Boolean'
+        returned_type['Integer']['Integer']['!='] = 'Boolean'
+        returned_type['String']['String']['!='] = 'Boolean'
+        returned_type['Float']['Float']['>='] = 'Boolean'
+        returned_type['Integer']['Integer']['>='] = 'Boolean'
+        returned_type['String']['String']['>='] = 'Boolean'
+        returned_type['Float']['Float']['<='] = 'Boolean'
+        returned_type['Integer']['Integer']['<='] = 'Boolean'
+        returned_type['String']['String']['<='] = 'Boolean'
+        returned_type['Float']['Integer']['=='] = 'Boolean'
+        returned_type['Integer']['Float']['=='] = 'Boolean'
+        returned_type['Float']['Integer']['!='] = 'Boolean'
+        returned_type['Integer']['Float']['!='] = 'Boolean'
+        returned_type['Float']['Integer']['>='] = 'Boolean'
+        returned_type['Integer']['Float']['>='] = 'Boolean'
+        returned_type['Float']['Integer']['<='] = 'Boolean'
+        returned_type['Integer']['Float']['<='] = 'Boolean'
+        returned_type['Integer']['Integer']['<<'] = 'Integer'
+        returned_type['Integer']['Integer']['>>'] = 'Integer'
+        returned_type['Integer']['Integer']['|'] = 'Integer'
+        returned_type['Integer']['Integer']['&'] = 'Integer'
+        returned_type['Integer']['Integer']['^'] = 'Integer'
+        returned_type['Integer']['Integer']['<'] = 'Boolean'
+        returned_type['Float']['Float']['<'] = 'Boolean'
+        returned_type['Float']['Integer']['<'] = 'Boolean'
+        returned_type['Integer']['Float']['<'] = 'Boolean'
+        returned_type['Boolean']['Boolean']['<'] = 'Boolean'
+        returned_type['Float']['Float']['>'] = 'Boolean'
+        returned_type['Float']['Integer']['>'] = 'Boolean'
+        returned_type['Integer']['Float']['>'] = 'Boolean'
+        returned_type['Integer']['Integer']['>'] = 'Boolean'
+        returned_type['Boolean']['Boolean']['>'] = 'Boolean'
+        returned_type['Boolean']['Boolean']['&&'] = 'Boolean'
+        returned_type['Boolean']['Boolean']['||'] = 'Boolean'
+        returned_type['Integer']['Integer']['%'] = 'Integer'
+        returned_type['Integer']['Float']['%'] = 'Integer'
+        returned_type['Float']['Integer']['%'] = 'Integer'
+        returned_type['Float']['Float']['%'] = 'Integer'
+
+###########
+
+        left = left_type[0].upper() + left_type[1:]
+        right = right_type[0].upper() + right_type[1:]
+
+        if left == 'Int':
+            left += 'eger'
+        if right == 'Int':
+            right += 'eger'
+
+        res_type = returned_type[left][right][node.operator]
+        if res_type is None:
+           return None
+
+        # perform operation...
+        result = None
+        if operator == '+':
+            if type(left) is str and type(right) is str:
+                result = left + right
+            else:
+                result = left.value + right.value
+        elif operator == '-':
+            result = left.value - right.value
+        elif operator == '*':
+            result = left.value * right.value
+        elif operator == '/':
+            try:
+                result = left.value / right.value
+            except ZeroDivisionError:
+                print "Line {0}: Division by 0.".format(node.line_no)
+                return None
+        elif operator == '%':
+            try:
+                result = left.value % right.value
+            except ZeroDivisionError:
+                print "Line {0}: Division by 0.".format(node.line_no)
+                return None
+        elif operator == '==':
+            result = left.value == right.value
+        elif operator == '!=':
+            result = left.value != right.value
+        elif operator == '>=':
+            result = left.value >= right.value
+        elif operator == '<=':
+            result = left.value <= right.value
+        elif operator == '>':
+            if type(left) is str and type(right) is str:
+                result = left > right
+            else:
+                result = left.value > right.value
+        elif operator == '<':
+            if type(left) is str and type(right) is str:
+                result = left < right
+            else:
+                result = left.value < right.value
+        elif operator == '|':
+            result = left.value | right.value
+        elif operator == '&':
+            result = left.value & right.value
+        elif operator == '^':
+            result = left.value ^ right.value
+        elif operator == '>>':
+            result = left.value >> right.value
+        elif operator == '<<':
+            result = left.value << right.value
+        elif operator == '&&':
+            result = left.value and right.value
+        elif operator == '||':
+            result = left.value and right.value
+
+        # create result node
+        if type(result) is int:
+            res_node = int(result)
+        elif type(result) is float:
+            res_node = float(result)
+        elif type(result) is str:
+            res_node = str(result)
+        else:
+            res_node = bool(result)
+
+        return res_node
+
         # try sth smarter than:
         # if(node.op=='+') return r1+r2
         # elsif(node.op=='-') ...
         # but do not use python eval
         # dopisac evaluatora, ktory przyjmie argumeny, operator i zwroci wynik (search on GitHub)
+
+
 
     @when(AST.Assignment)
     def visit(self, node):
