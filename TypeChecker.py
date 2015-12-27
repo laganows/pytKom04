@@ -241,14 +241,16 @@ class TypeChecker(NodeVisitor):
             self.hasReturn = True
 
     def visit_Continue(self, node, tab):
-        if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil:
-            print "Error: continue instruction outside a loop: line {0}".format(node.line-1)
-            self.noErrors = False
+        if self.actLoop.__len__() != 0:
+            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil:
+                print "Error: continue instruction outside a loop: line {0}".format(node.line-1)
+                self.noErrors = False
 
     def visit_Break(self, node, tab): #node - wezel drzewa
-        if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil:
-            print "Error: break instruction outside a loop: line {0}".format(node.line-1)
-            self.noErrors = False
+        if self.actLoop.__len__() != 0:
+            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil:
+                print "Error: break instruction outside a loop: line {0}".format(node.line-1)
+                self.noErrors = False
 
     def visit_Compound(self, node, tab, *args):
         if len(args) > 0 and args[0] is True:
@@ -266,7 +268,7 @@ class TypeChecker(NodeVisitor):
     def visit_Expression(self, node, tab):
         pass
 
-    def visit_Const(self, node):
+    def visit_Const(self, node, tab):
         if re.match(r"(\+|-){0,1}(\d+\.\d+|\.\d+)", node.value):
             return self.visit_Float(node)
         elif re.match(r"(\+|-){0,1}\d+", node.value):
