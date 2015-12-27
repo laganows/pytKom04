@@ -241,17 +241,22 @@ class TypeChecker(NodeVisitor):
             self.hasReturn = True
 
 
+    def isError(self):
+        return type(self.actLoop[-1])!=AST.While and type(self.actLoop[-1])!=AST.RepeatUntil
+
     def visit_Continue(self, node, tab):
         if self.actLoop.__len__() != 0:
-            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil: #inaczej sprawdzac czy ostatni element to AST.While lub AST.RepeatUntil
+            if self.isError():
                 print "Error: continue instruction outside a loop: line {0}".format(node.line-1)
                 self.errorPresence = True
 
     def visit_Break(self, node, tab): #node - wezel drzewa
         if self.actLoop.__len__() != 0:
-            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil: #inaczej sprawdzac czy ostatni element to AST.While lub AST.RepeatUntil
+            if self.isError():
                 print "Error: break instruction outside a loop: line {0}".format(node.line-1)
                 self.errorPresence = True
+
+
 
     def visit_Compound(self, node, tab, *args):
         if len(args) > 0 and args[0] is True:

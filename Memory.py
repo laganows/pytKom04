@@ -9,9 +9,9 @@ class Memory:
         return self.memory.has_key(name)
 
     def get(self, name):         # gets from memory current value of variable <name>
-        if self.has_key(name):
-            return self.memory[name]
-        return None
+        if not self.has_key(name):
+            return None
+        return self.memory[name]
 
     def put(self, name, value):  # puts into memory current value of variable <name>
         self.memory[name] = value
@@ -21,14 +21,13 @@ class MemoryStack:
                                                                              
     def __init__(self, memory=None): # initialize memory stack with memory <memory>
         self.stack = []
-        if memory is not None:
-            self.stack.append(memory)
+        if memory is None:
+            self.stack.append(Memory("sth"))
         else:
-            self.stack.append(Memory("global"))
+            self.stack.append(memory)
 
     def get(self, name):             # gets from memory stack current value of variable <name>
-        ind = range(1, len(self.stack) + 1)
-        for i in ind:
+        for i in range(1, len(self.stack) + 1):
             if self.stack[-i].has_key(name):
                 return self.stack[-i].get(name)
         return None
@@ -37,11 +36,10 @@ class MemoryStack:
         self.stack[-1].put(name, value)
 
     def set(self, name, value): # sets variable <name> to value <value>
-        ind = range(1, len(self.stack) + 1)
-        for i in ind:
+        for i in range(1, len(self.stack) + 1):
             if self.stack[-i].has_key(name):
                 self.stack[-i].put(name, value)
-                break
+                return None
         
     def push(self, memory): # pushes memory <memory> onto the stack
         self.stack.append(memory)

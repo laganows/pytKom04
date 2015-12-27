@@ -11,14 +11,13 @@ sys.setrecursionlimit(10000)
 class Interpreter(object):
 
     def __init__(self):
-        self.memoryStack = MemoryStack()
+        self.isOutsiteFunction = True
+        self.stack = MemoryStack()
         self.declaredType = None
-        self.isFunctionScope = False
 
     @on('node')
     def visit(self, node):
         pass
-
 
     @when(AST.Program)
     def visit(self, node):
@@ -33,25 +32,22 @@ class Interpreter(object):
     def visit(self, node):
         pass
 
-
     @when(AST.Declaration)
     def visit(self, node):
         self.declaredType = node.type
         for init in node.inits.inits:
             init.accept(self)
 
-
     @when(AST.Init)
     def visit(self, node):
-        expr_val = node.expression.accept(self)
-        self.memoryStack.insert(node.id, expr_val)
-        return expr_val
+        tmp = node.expression.accept(self)
+        self.stack.insert(node.id, tmp)
+        return tmp
 
     @when(AST.Instructions)
     def visit(self, node):
         for instruction in node.instructions:
             instruction.accept(self)
-
 
     @when(AST.BinExpr)
     def visit(self, node):
@@ -94,22 +90,18 @@ class Interpreter(object):
 
     @when(AST.Assignment)
     def visit(self, node):
-        expr_accept = node.expression.accept(self)
-        self.memoryStack.set(node.id, expr_accept)
-        return expr_accept
+        tmp = node.expression.accept(self)
+        self.stack.set(node.id, tmp)
+        return tmp
 
     @when(AST.Choice)
     def visit(self, node):
-        if node._if.accept(self) is False:
-            if node._else is not None:
-                node._else.accept(self)
+        if node._if.accept(self) is False and node._else is not None:
+            return node._else.accept(self)
 
     @when(AST.If)
     def visit(self, node):
-        if node.cond.accept(self):
-            return node.statement.accept(self)
-        else:
-            return False
+        return node.statement.accept(self) if node.cond.accept(self) else False
 
     @when(AST.Else)
     def visit(self, node):
@@ -119,24 +111,17 @@ class Interpreter(object):
     @when(AST.Const)
     def visit(self, node):
         if re.match(r"(\+|-){0,1}(\d+\.\d+|\.\d+)", node.value):
-            return self.float(node)
+            return float(node.value)
         elif re.match(r"(\+|-){0,1}\d+", node.value):
-            return self.integer(node)
-        elif re.match(r"\A('.*'|\".*\")\Z", node.value):
-            return self.string(node)
+            return int(node.value)
+        elif type(node.value) is str:
+            return node.value
         else:
-            #print node
-            from_stack = self.memoryStack.get(node.value)
-            return from_stack.value if from_stack is not None else None
-
-    def float(self, node):
-        return float(node.value)
-
-    def integer(self, node):
-        return int(node.value)
-
-    def string(self, node):
-        return node.value
+            item = self.stack.get(node.value)
+            if item is not None:
+                return item.value
+            else:
+                return item
 
     @when(AST.While)
     def visit(self, node):
@@ -164,14 +149,14 @@ class Interpreter(object):
 
     @when(AST.Compound)
     def visit(self, node):
-        if not self.isFunctionScope:
-            newMemory = Memory("scope")
-            self.memoryStack.push(newMemory)
+        if self.isOutsiteFunction:
+            new = Memory("new")
+            self.stack.push(new)
             node.parts.accept(self)
-            self.memoryStack.pop()
+            self.stack.pop()
         else:
             node.parts.accept(self)
-            self.isFunctionScope = False
+            self.isOutsiteFunction = True
 
     @when(AST.Break)
     def visit(self, node):
@@ -213,7 +198,7 @@ class Interpreter(object):
 
     @when(AST.Id)
     def visit(self, node):
-        return self.memoryStack.get(node.id)
+        return self.stack.get(node.id)
 
     @when(AST.FunctionDefinitions) ###
     def visit(self, node):
@@ -222,23 +207,24 @@ class Interpreter(object):
 
     @when(AST.FunctionDefinition)
     def visit(self, node):
-        self.memoryStack.insert(node.id, node)
+        self.stack.insert(node.id, node)
 
     @when(AST.FunctionCall)
     def visit(self, node):
-        function = self.memoryStack.get(node.id)
-        functionMemory = Memory(node.id)
-        for argId, argExpr in zip(function.arglist.arg_list, node.expression_list.expressions):
-            functionMemory.put(argId.accept(self), argExpr.accept(self))
-        self.memoryStack.push(functionMemory)
-        self.isFunctionScope = True
+        fun = self.stack.get(node.id)
+        funMemory = Memory(node.id)
+        tmp = zip(fun.arglist.arg_list, node.expression_list.expressions)
+        for argId, argExpr in tmp:
+            funMemory.put(argId.accept(self), argExpr.accept(self))
+        self.stack.push(funMemory)
+        self.isOutsiteFunction = False
         try:
-            function.compound_instr.accept(self)
-        except ReturnValueException as e:
-            return e.value
+            fun.compound_instr.accept(self)
+        except ReturnValueException as er:
+            return er.value
         finally:
-            self.isFunctionScope = False
-            self.memoryStack.pop()
+            self.isOutsiteFunction = True
+            self.stack.pop()
 
     @when(AST.ExpressionInPar)
     def visit(self, node):
