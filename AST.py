@@ -52,9 +52,6 @@ class Declarations(Node):
         if declaration:
             self.declarations.append(declaration)
 
-
-
-
 class Condition(Node):
     pass
 

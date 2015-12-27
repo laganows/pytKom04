@@ -133,7 +133,7 @@ class TypeChecker(NodeVisitor):
         self.actFunc = None
         self.actComp = None
         self.actLoop = []
-        self.noErrors = True
+        self.errorPresence = False
         self.visit(node.parts, tab)
 
     def visit_Parts(self, node, tab):
@@ -153,18 +153,18 @@ class TypeChecker(NodeVisitor):
     def visit_Init(self, node, tab, type):
         if node.id in tab.symbols and self.actFunc != None:
             print "Error: Function identifier '{0}' used as a variable: line {1}".format(node.id, node.line)
-            self.noErrors = False
+            self.errorPresence = True
 
         elif node.id in tab.symbols:
             print "Error: Variable '{0}' already declared: line {1}".format(node.id, node.line)
-            self.noErrors = False
+            self.errorPresence = True
 
 
         value_type = self.visit(node.expression, tab)
         if not value_type in ttype['='][type]:
             print "Error: Assignment of {0} to {1}: line {2}" \
                 .format(value_type, type, node.line)
-            self.noErrors = False
+            self.errorPresence = True
 
         else:
             if "warn" in ttype['='][type][value_type]:
@@ -190,14 +190,14 @@ class TypeChecker(NodeVisitor):
         variable = self.findVariable(tab, node.id)
         if variable is None:
             print "Error: Variable '{0}' undefined in current scope: line {1}".format(node.id, node.line-1)
-            self.noErrors = False
+            self.errorPresence = True
         else:
             value_type = self.visit(node.expression, tab)
             if value_type != None:
                 if not value_type in ttype["="][variable.type]:
                     print "Error: Assignment of {0} to {1}: line {2}" \
                         .format(value_type, variable.type, node.line)
-                    self.noErrors = False
+                    self.errorPresence = True
 
                 else:
                     if "warn" in ttype["="][variable.type][value_type]:
@@ -231,26 +231,26 @@ class TypeChecker(NodeVisitor):
     def visit_Return(self, node, tab):
         if not type(self.actFunc)==AST.FunctionDefinition:
             print "Error: Return instruction outside a function: line {0}".format(node.line-2)
-            self.noErrors = False
+            self.errorPresence = True
         else:
             rettype = self.visit(node.expression, tab)
             if rettype != self.actFunc.type and rettype != None:
                 print "Error: Improper returned type, expected {2}, got {0}: line {1}".format(rettype, node.line-1, self.actFunc.type)
-                self.noErrors = False
+                self.errorPresence = True
 
             self.hasReturn = True
 
     def visit_Continue(self, node, tab):
         if self.actLoop.__len__() != 0:
-            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil:
+            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil: #inaczej sprawdzac czy ostatni element to AST.While lub AST.RepeatUntil
                 print "Error: continue instruction outside a loop: line {0}".format(node.line-1)
-                self.noErrors = False
+                self.errorPresence = True
 
     def visit_Break(self, node, tab): #node - wezel drzewa
         if self.actLoop.__len__() != 0:
-            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil:
+            if not type(self.actLoop[-1])==AST.While and not type(self.actLoop[-1])==AST.RepeatUntil: #inaczej sprawdzac czy ostatni element to AST.While lub AST.RepeatUntil
                 print "Error: break instruction outside a loop: line {0}".format(node.line-1)
-                self.noErrors = False
+                self.errorPresence = True
 
     def visit_Compound(self, node, tab, *args):
         if len(args) > 0 and args[0] is True:
@@ -269,33 +269,25 @@ class TypeChecker(NodeVisitor):
         pass
 
     def visit_Const(self, node, tab):
-        if re.match(r"(\+|-){0,1}(\d+\.\d+|\.\d+)", node.value):
-            return self.visit_Float(node)
-        elif re.match(r"(\+|-){0,1}\d+", node.value):
-            return self.visit_Integer(node)
-        elif re.match(r"\A('.*'|\".*\")\Z", node.value):
-            return self.visit_String(node)
-        else:
-            variable = self.scope.get(node.value)
-            if variable is None:
-                print "Variable {} in line {} hasn't been declared".format(node.value, node.line)
-            else:
-                return variable.type
-
-    def visit_Integer(self, node):
-        return 'int'
-
-    def visit_Float(self,node):
-        return 'float'
-
-    def visit_String(self,node):
-        return 'string'
+        value = node.value
+        if (value[0] in ('"', "'")) and (value[len(value) - 1] in ('"', "'")):
+            return 'string'
+        try:
+            int(value)
+            return 'int'
+        except ValueError:
+            try:
+                float(value)
+                return 'float'
+            except ValueError:
+                print "Error: {0} type is not recognized".format(value)
+                self.errorPresence = True
 
     def visit_Id(self, node, tab):
         variable = self.findVariable(tab, node.id)
         if variable is None:
             print "Error: Usage of undeclared variable '{0}': line {1}".format(node.id, node.line)
-            self.noErrors = False
+            self.errorPresence = True
 
         else:
             return variable.type
@@ -306,7 +298,7 @@ class TypeChecker(NodeVisitor):
         op = node.operator;
         if type1 is None or not type2 in ttype[op][type1]:
             print "Error: Illegal operation, {0} {1} {2}: line {3}".format(type1, op, type2, node.line)
-            self.noErrors = False
+            self.errorPresence = True
 
         else:
             return ttype[op][type1][type2]
@@ -319,12 +311,12 @@ class TypeChecker(NodeVisitor):
         function = self.findVariable(tab, node.id)
         if function is None:
             print "Error: Call of undefined fun: '{0}': line {1}".format(node.id, node.line)
-            self.noErrors = False
+            self.errorPresence = True
 
         else:
             if len(function.arguments.arg_list) != len(node.expression_list.expressions):
                 print "Error: Improper number of args in {0} call: line {1}".format(node.id, node.line)
-                self.noErrors = False
+                self.errorPresence = True
 
             else:
                 for i in range(len(function.arguments.arg_list)):
@@ -332,7 +324,7 @@ class TypeChecker(NodeVisitor):
                     given_type = self.visit(node.expression_list.expressions[i], tab)
                     if not given_type in ttype['='][arg_type]:
                         print "Error: Improper type of args in {0} call: line {1}".format(node.id, node.line)
-                        self.noErrors = False
+                        self.errorPresence = True
 
                         break
 
@@ -351,7 +343,7 @@ class TypeChecker(NodeVisitor):
         fun_name = self.findVariable(tab, node.id)
         if not fun_name is None:
             print "Error: Redefinition of function '{0}': line {1}".format(node.id, node.arglist.line)
-            self.noErrors = False
+            self.errorPresence = True
 
         else:
             tab.put(node.id, Function(node.id, node.type, node.arglist))
@@ -363,7 +355,7 @@ class TypeChecker(NodeVisitor):
             self.visit(node.compound_instr, tab, True)
             if self.hasReturn == False:
                 print "Error: Missing return statement in function '{0}' function returning {2}: line {1}".format(node.id, node.arglist.line, self.actFunc.type)
-                self.noErrors = False
+                self.errorPresence = True
 
             self.hasReturn = False
             self.actFunc = None
@@ -376,7 +368,7 @@ class TypeChecker(NodeVisitor):
     def visit_Argument(self, node, tab):
         if node.id in tab.symbols:
             print "Error: Redefinition of symbol {0}: line {1}".format(node.id, node.line)
-            self.noErrors = False
+            self.errorPresence = True
 
         else:
             tab.put(node.id, VariableSymbol(node.id, node.type, None))
