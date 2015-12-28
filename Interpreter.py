@@ -1,19 +1,18 @@
 import re
 import AST
-import SymbolTable
 from Memory import *
 from Exceptions import  *
 from visit import *
-import sys, time
+import sys
 
 sys.setrecursionlimit(10000)
 
 class Interpreter(object):
 
     def __init__(self):
-        self.isOutsiteFunction = True
+        self.isOutsideFunction = True
         self.stack = MemoryStack()
-        self.declaredType = None
+        self.nodeDeclarationType = None
 
     @on('node')
     def visit(self, node):
@@ -34,7 +33,7 @@ class Interpreter(object):
 
     @when(AST.Declaration)
     def visit(self, node):
-        self.declaredType = node.type
+        self.nodeDeclarationType = node.type
         for init in node.inits.inits:
             init.accept(self)
 
@@ -149,14 +148,14 @@ class Interpreter(object):
 
     @when(AST.Compound)
     def visit(self, node):
-        if self.isOutsiteFunction:
+        if self.isOutsideFunction:
             new = Memory("new")
             self.stack.push(new)
             node.parts.accept(self)
             self.stack.pop()
         else:
             node.parts.accept(self)
-            self.isOutsiteFunction = True
+            self.isOutsideFunction = True
 
     @when(AST.Break)
     def visit(self, node):
@@ -217,13 +216,13 @@ class Interpreter(object):
         for argId, argExpr in tmp:
             funMemory.put(argId.accept(self), argExpr.accept(self))
         self.stack.push(funMemory)
-        self.isOutsiteFunction = False
+        self.isOutsideFunction = False
         try:
             fun.compound_instr.accept(self)
         except ReturnValueException as er:
             return er.value
         finally:
-            self.isOutsiteFunction = True
+            self.isOutsideFunction = True
             self.stack.pop()
 
     @when(AST.ExpressionInPar)
