@@ -1,7 +1,7 @@
 import re
 import AST
 from Memory import *
-from Exceptions import  *
+from Exceptions import *
 from visit import *
 import sys
 
@@ -199,7 +199,7 @@ class Interpreter(object):
     def visit(self, node):
         return self.stack.get(node.id)
 
-    @when(AST.FunctionDefinitions) ###
+    @when(AST.FunctionDefinitions)
     def visit(self, node):
         for fundef in node.fundefs:
             fundef.accept(self)
@@ -212,9 +212,12 @@ class Interpreter(object):
     def visit(self, node):
         fun = self.stack.get(node.id)
         funMemory = Memory(node.id)
-        tmp = zip(fun.arglist.arg_list, node.expression_list.expressions)
-        for argId, argExpr in tmp:
-            funMemory.put(argId.accept(self), argExpr.accept(self))
+        tmp = len(fun.arglist.arg_list)
+        tmp2 = len(node.expression_list.expressions)
+
+        for i in range(0, min(tmp, tmp2), 1):
+            funMemory.put(fun.arglist.arg_list[i].accept(self), node.expression_list.expressions[i].accept(self))
+
         self.stack.push(funMemory)
         self.isOutsideFunction = False
         try:

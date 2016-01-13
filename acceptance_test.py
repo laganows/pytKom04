@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 import filecmp
 import unittest
 import os
@@ -10,26 +9,16 @@ class AcceptanceTests(unittest.TestCase):
     def add_test(cls, dirpath, filename):
         basename = os.path.splitext(filename)[0]
 
-        if dirpath.startswith('./'):
-            dirpath = dirpath[2:]
-        if dirpath.endswith('/'):
-            dirpath = dirpath[:-1]
-
-        name = os.path.join(dirpath, basename)
+        dirname = os.path.join(*os.path.split(dirpath)[1:])
+        name = os.path.join(dirname, basename)
 
         def file2func_name(filename):
             return 'test_' + filename
 
         def test_func(self):
-            os.system("python main.py {2}.in > {2}.actual".format(dirpath,filename,name))
-            file_actual = "{0}.actual".format(name)
-            file_expected = "{0}.expected".format(name)
-            res = filecmp.cmp(file_actual, file_expected)
-            self.assertTrue(res, "files {0} and {1} differ\n---ACTUAL---\n{2}\n---EXPECTED---\n{3}\n---".format(file_actual,
-                                                                                                                file_expected,
-                                                                                                                open(file_actual, 'r').read(),
-                                                                                                                open(file_expected, 'r').read()
-                                                                                                               ))
+            os.system("python main.py tests/{0} > tests/{1}.actual".format(filename,name))
+            res = filecmp.cmp("tests/{0}.actual".format(name), "tests/{0}.expected".format(name))
+            self.assertTrue(res, "files {0}.actual and {0}.expected differ".format(name))
 
         func_name = file2func_name(name)
         setattr(cls, func_name, test_func)
@@ -44,8 +33,5 @@ class AcceptanceTests(unittest.TestCase):
                     cls.add_test(dirpath,filename)
 
 if __name__ == '__main__':
-
-    test_dir = sys.argv[1] if len(sys.argv) > 1 else "tests/"
-    sys.argv = [sys.argv[0]]
     AcceptanceTests.add_tests('tests/')
     unittest.main()
