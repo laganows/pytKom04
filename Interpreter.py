@@ -115,12 +115,6 @@ class Interpreter(object):
             return int(node.value)
         elif type(node.value) is str:
             return node.value
-        else:
-            item = self.stack.get(node.value)
-            if item is not None:
-                return item.value
-            else:
-                return item
 
     @when(AST.While)
     def visit(self, node):
@@ -149,13 +143,11 @@ class Interpreter(object):
     @when(AST.Compound)
     def visit(self, node):
         if self.isOutsideFunction:
-            new = Memory("new")
-            self.stack.push(new)
+            self.stack.push(Memory("new"))
             node.parts.accept(self)
             self.stack.pop()
         else:
             node.parts.accept(self)
-            self.isOutsideFunction = True
 
     @when(AST.Break)
     def visit(self, node):
@@ -220,6 +212,7 @@ class Interpreter(object):
 
         self.stack.push(funMemory)
         self.isOutsideFunction = False
+
         try:
             fun.compound_instr.accept(self)
         except ReturnValueException as er:
