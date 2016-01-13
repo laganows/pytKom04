@@ -12,7 +12,6 @@ class Interpreter(object):
     def __init__(self):
         self.isOutsideFunction = True
         self.stack = MemoryStack()
-        self.nodeDeclarationType = None
 
     @on('node')
     def visit(self, node):
@@ -33,7 +32,6 @@ class Interpreter(object):
 
     @when(AST.Declaration)
     def visit(self, node):
-        self.nodeDeclarationType = node.type
         for init in node.inits.inits:
             init.accept(self)
 
