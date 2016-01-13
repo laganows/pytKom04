@@ -109,9 +109,9 @@ class Interpreter(object):
 
     @when(AST.Const)
     def visit(self, node):
-        if re.match(r"(\+|-){0,1}(\d+\.\d+|\.\d+)", node.value):
+        if re.match(r"(\+|-){,1}(\.\d+|\d+\.\d+)", node.value):
             return float(node.value)
-        elif re.match(r"(\+|-){0,1}\d+", node.value):
+        elif re.match(r"(\+|-){,1}\d+", node.value):
             return int(node.value)
         elif type(node.value) is str:
             return node.value
